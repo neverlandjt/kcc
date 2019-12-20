@@ -7,6 +7,7 @@
 #include<QFileSystemModel>
 #include<QDebug>
 #include <QApplication>
+#include<QTableView>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -45,13 +46,15 @@ private
 
     void pasteFile();
 
-    void contextMenuEvent(QContextMenuEvent *event);
-
     void on_lhsView_doubleClicked(const QModelIndex &index);
 
     void on_rhsView_doubleClicked(const QModelIndex &index);
 
     QString getCurrentPath();
+
+protected:
+    void closeEvent(QCloseEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent *event) override;
 
 private:
     Ui::MainWindow *ui;
