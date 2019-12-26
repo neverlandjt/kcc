@@ -38,6 +38,8 @@ private
 
     void exit();
 
+    void customMenuRequested(const QPoint &pos);
+
     void deleteFile();
 
     void editRecord();
@@ -52,9 +54,11 @@ private
 
     QString getCurrentPath();
 
+    void on_click(const QModelIndex &index);
+
 protected:
     void closeEvent(QCloseEvent *event) override;
-    void contextMenuEvent(QContextMenuEvent *event) override;
+//    void contextMenuEvent(QContextMenuEvent *event) override;
 
 private:
     Ui::MainWindow *ui;
@@ -72,8 +76,12 @@ private:
     QMenu *fileMenu;
     QMenu *helpMenu;
 
-    QClipboard *clipBoard = QApplication::clipboard();
+
     QFileInfo copyInfo;
+    QModelIndex selectedIndex;
+
+public:
+
 
 };
 #endif // MAINWINDOW_H

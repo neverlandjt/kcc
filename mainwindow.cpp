@@ -35,6 +35,17 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lhsView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->rhsView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
+    connect(ui->lhsView, SIGNAL(clicked(QModelIndex)), this, SLOT(on_click(QModelIndex)));
+    connect(ui->rhsView, SIGNAL(clicked(QModelIndex)), this, SLOT(on_click(QModelIndex)));
+
+
+    connect(ui->lhsView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(customMenuRequested( QPoint)));
+    connect(ui->rhsView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(customMenuRequested(QPoint)));
+
+
+    ui->lhsView->setContextMenuPolicy(Qt::CustomContextMenu);
+    ui->rhsView->setContextMenuPolicy(Qt::CustomContextMenu);
+
     createActions();
     addMenu();
 }
@@ -43,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 void MainWindow::copyFile() {
    copyInfo = lhsmodel->fileInfo(ui->lhsView->selectionModel()->currentIndex());
-   qDebug() << copyInfo.filePath();
+//   qDebug() << copyInfo.filePath();
 
 }
 
@@ -129,25 +140,45 @@ MainWindow::~MainWindow() {
     delete ui;
 }
 
-void MainWindow::contextMenuEvent(QContextMenuEvent *event) {
+//void MainWindow::contextMenuEvent(QContextMenuEvent *event) {
 
-    QMenu *menu = new QMenu(this);
+//    QMenu *menu = new QMenu(this);
+////    QTableView* listView = (QTableView*)sender();
+//    QModelIndex index=ui->lhsView->indexAt(event->pos());
+//    qDebug() << index.data();
+//    menu->addAction(editAct);
+//    menu->addAction(deleteAct);
+//    menu->addAction(copyAct);
+//    menu->addAction(pasteAct);
 
-    menu->addAction(editAct);
-    menu->addAction(deleteAct);
-    menu->addAction(copyAct);
-    menu->addAction(pasteAct);
+//    menu->exec(event->globalPos());
 
-    menu->exec(event->globalPos());
+//}
 
-}
+void MainWindow::customMenuRequested(const QPoint &pos){
+
+        QMenu *menu = new QMenu(this);
+        QTableView* listView = (QTableView*)sender();
+        selectedIndex =ui->lhsView->indexAt(pos);
+        if( selectedIndex.isValid()){
+        menu->addAction(editAct);
+        menu->addAction(deleteAct);
+        menu->addAction(copyAct);
+    }
+        menu->addAction(pasteAct);
+        menu->popup(listView->viewport()->mapToGlobal(pos));
+//        menu->exec(event->globalPos());
+
+    }
+
 
 void MainWindow::editRecord() {
-    int row = ui->lhsView->selectionModel()->currentIndex().row();
-    QDir dir = QDir::current();
-    if (row > 0) {
+
+
+    QDir dir = lhsmodel->fileInfo(selectedIndex).dir();
+    qDebug() << dir;
         bool ok;
-        QString oldName = lhsmodel->fileName(ui->lhsView->selectionModel()->currentIndex());
+        QString oldName = lhsmodel->fileName(selectedIndex);
         QString text = QInputDialog::getText(this, tr("Rename file"),
                                              tr("New name:"), QLineEdit::Normal,
                                              oldName, &ok);
@@ -155,10 +186,11 @@ void MainWindow::editRecord() {
             dir.rename(oldName, text);
 
         }
-    }
+
 }
 
 void MainWindow::deleteFile() {
+
     int row = ui->lhsView->selectionModel()->currentIndex().row();
     if (row > 0) {
         QMessageBox::StandardButton reply;
@@ -172,14 +204,13 @@ void MainWindow::deleteFile() {
         } else {
           qDebug() << "Yes was *not* clicked";
         }
-
     }
 }
 
 
 void navigate(QTableView  *view, const QModelIndex &index, QFileSystemModel* model ){
         QString sPath = model->fileInfo(index).absoluteFilePath();
-        qDebug() << sPath;
+//        qDebug() << sPath;
         if (model->fileInfo(index).isDir()) {
             model->index(sPath);
             view->setRootIndex(model->index(sPath));
@@ -195,4 +226,10 @@ void MainWindow::on_lhsView_doubleClicked(const QModelIndex &index) {
 
 void MainWindow::on_rhsView_doubleClicked(const QModelIndex &index) {
 navigate(ui->rhsView, index, rhsmodel);
+}
+
+void MainWindow::on_click(const QModelIndex &index)
+{
+     selectedIndex = index;
+//     qDebug() << index.data();
 }
