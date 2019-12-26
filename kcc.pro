@@ -17,6 +17,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     actions.cpp \
+    copy_cut_paste.cpp \
     main.cpp \
     mainwindow.cpp
 

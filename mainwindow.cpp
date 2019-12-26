@@ -10,21 +10,20 @@
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
-    QString sPath = QDir::currentPath();
+    QString sPath = QDir::homePath();
+    curr_lhs_path= sPath;
+    curr_rhs_path = sPath;
 
-
-    lhsmodel = new QFileSystemModel(this);
-    lhsmodel->setRootPath(sPath);
-    lhsmodel->setFilter(QDir::AllEntries | QDir::NoDot);
-    ui->lhsView->setModel(lhsmodel);
-    ui->lhsView->setRootIndex(lhsmodel->index(sPath));
+    model = new QFileSystemModel(this);
+    model->setRootPath(sPath);
+    model->setFilter(QDir::AllEntries | QDir::NoDot);
+    ui->lhsView->setModel(model);
+    ui->lhsView->setRootIndex(model->index(sPath));
     ui->lhsView->verticalHeader()->setVisible(false); // hide index column
 
-    rhsmodel = new QFileSystemModel(this);
-    rhsmodel->setRootPath(sPath);
-    rhsmodel->setFilter(QDir::AllEntries | QDir::NoDot);
-    ui->rhsView->setModel(rhsmodel);
-    ui->rhsView->setRootIndex(rhsmodel->index(sPath));
+
+    ui->rhsView->setModel(model);
+    ui->rhsView->setRootIndex(model->index(sPath));
     ui->rhsView->verticalHeader()->setVisible(false); // hide index column
 
     ui->lhsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
@@ -48,22 +47,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     createActions();
     addMenu();
-}
-
-
-
-void MainWindow::copyFile() {
-   copyInfo = lhsmodel->fileInfo(ui->lhsView->selectionModel()->currentIndex());
-//   qDebug() << copyInfo.filePath();
-
-}
-
-
-void MainWindow::pasteFile() {
-    if(!QFile::copy(copyInfo.filePath(),lhsmodel->fileInfo(ui->lhsView->selectionModel()->currentIndex()).absolutePath()+"/"+copyInfo.fileName())){
-
-        QFile::copy(copyInfo.filePath(),lhsmodel->fileInfo(ui->lhsView->selectionModel()->currentIndex()).absoluteFilePath()+"/"+copyInfo.fileName());
-    }
 }
 
 
@@ -101,9 +84,7 @@ void MainWindow::addMenu() {
 }
 
 
-QString MainWindow::getCurrentPath(){
-    return lhsmodel->fileInfo(ui->lhsView->selectionModel()->currentIndex()).absoluteFilePath();
-}
+
 
 void MainWindow::newFile() {
     bool ok;
@@ -140,78 +121,66 @@ MainWindow::~MainWindow() {
     delete ui;
 }
 
-//void MainWindow::contextMenuEvent(QContextMenuEvent *event) {
 
-//    QMenu *menu = new QMenu(this);
-////    QTableView* listView = (QTableView*)sender();
-//    QModelIndex index=ui->lhsView->indexAt(event->pos());
-//    qDebug() << index.data();
-//    menu->addAction(editAct);
-//    menu->addAction(deleteAct);
-//    menu->addAction(copyAct);
-//    menu->addAction(pasteAct);
-
-//    menu->exec(event->globalPos());
-
-//}
 
 void MainWindow::customMenuRequested(const QPoint &pos){
-
         QMenu *menu = new QMenu(this);
-        QTableView* listView = (QTableView*)sender();
-        selectedIndex =ui->lhsView->indexAt(pos);
-        if( selectedIndex.isValid()){
-        menu->addAction(editAct);
-        menu->addAction(deleteAct);
-        menu->addAction(copyAct);
-    }
-        menu->addAction(pasteAct);
-        menu->popup(listView->viewport()->mapToGlobal(pos));
-//        menu->exec(event->globalPos());
+        QTableView* view = qobject_cast<QTableView *>(sender());
+        selectedIndex =view->indexAt(pos);
+
+        if( view->indexAt(pos).isValid())
+        {
+            menu->addAction(editAct);
+            menu->addAction(deleteAct);
+            menu->addAction(copyAct);
+            menu->addAction(cutAct);
+        }
+        if (view ==  ui->rhsView){
+             menu->addAction(rhsPasteAct);
+        }
+        else if (view ==  ui->lhsView){
+             menu->addAction(lhsPasteAct);
+        }
+        menu->popup(view->viewport()->mapToGlobal(pos));
+
 
     }
 
 
 void MainWindow::editRecord() {
 
-
-    QDir dir = lhsmodel->fileInfo(selectedIndex).dir();
-    qDebug() << dir;
+    QDir curr_dir = model->fileInfo(selectedIndex).dir();
         bool ok;
-        QString oldName = lhsmodel->fileName(selectedIndex);
+        QString oldName = model->fileName(selectedIndex);
         QString text = QInputDialog::getText(this, tr("Rename file"),
                                              tr("New name:"), QLineEdit::Normal,
                                              oldName, &ok);
         if (ok && !text.isEmpty()) {
-            dir.rename(oldName, text);
-
+            curr_dir.rename(oldName, text);
         }
 
 }
 
 void MainWindow::deleteFile() {
-
-    int row = ui->lhsView->selectionModel()->currentIndex().row();
-    if (row > 0) {
         QMessageBox::StandardButton reply;
         reply = QMessageBox::question(this, "Delete", "Are you sure? This action cannot be undone.",
                                       QMessageBox::Yes|QMessageBox::No);
         if (reply == QMessageBox::Yes) {
           qDebug() << "Yes was clicked";
-          if (!lhsmodel->remove(ui->lhsView->selectionModel()->currentIndex())) {
+          if (!model->remove(selectedIndex)) {
               qDebug() << "not removed";
           }
         } else {
           qDebug() << "Yes was *not* clicked";
         }
-    }
+
 }
 
 
-void navigate(QTableView  *view, const QModelIndex &index, QFileSystemModel* model ){
+void MainWindow::navigate(QTableView  *view, const QModelIndex &index, QString& curr_path ){
         QString sPath = model->fileInfo(index).absoluteFilePath();
-//        qDebug() << sPath;
         if (model->fileInfo(index).isDir()) {
+            curr_path = sPath;
             model->index(sPath);
             view->setRootIndex(model->index(sPath));
         } else if (model->fileInfo(index).isFile()) {
@@ -221,15 +190,14 @@ void navigate(QTableView  *view, const QModelIndex &index, QFileSystemModel* mod
 }
 
 void MainWindow::on_lhsView_doubleClicked(const QModelIndex &index) {
-    navigate(ui->lhsView, index, lhsmodel);
+    navigate(ui->lhsView, index,  curr_lhs_path);
 }
 
 void MainWindow::on_rhsView_doubleClicked(const QModelIndex &index) {
-navigate(ui->rhsView, index, rhsmodel);
+navigate(ui->rhsView, index,  curr_rhs_path);
 }
 
 void MainWindow::on_click(const QModelIndex &index)
 {
      selectedIndex = index;
-//     qDebug() << index.data();
 }

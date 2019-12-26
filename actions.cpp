@@ -40,9 +40,17 @@ void MainWindow::createActions() {
 
     connect(copyAct, SIGNAL(triggered()), this, SLOT(copyFile()));
 
-    pasteAct = new QAction(("Paste"), this);
+    rhsPasteAct = new QAction(("Paste"), this);
 //    pasteAct->setShortcuts(QKeySequence::Paste);
 
-    connect(pasteAct, SIGNAL(triggered()), this, SLOT(pasteFile()));
+    connect(rhsPasteAct, SIGNAL(triggered()), this, SLOT(rhsPasteFile()));
 
+    lhsPasteAct = new QAction(("Paste"), this);
+//    pasteAct->setShortcuts(QKeySequence::Paste);
+
+    connect(lhsPasteAct, SIGNAL(triggered()), this, SLOT(lhsPasteFile()));
+
+
+   cutAct =new QAction(("Cut"), this);
+    connect(cutAct, SIGNAL(triggered()), this, SLOT(cutFile()));
 }

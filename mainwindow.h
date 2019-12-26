@@ -46,24 +46,26 @@ private
 
     void copyFile();
 
-    void pasteFile();
+    void rhsPasteFile();
+     void lhsPasteFile();
 
     void on_lhsView_doubleClicked(const QModelIndex &index);
 
     void on_rhsView_doubleClicked(const QModelIndex &index);
 
-    QString getCurrentPath();
+    void cutFile();
 
     void on_click(const QModelIndex &index);
+    void navigate(QTableView  *view, const QModelIndex &index, QString& curr_path );
 
 protected:
     void closeEvent(QCloseEvent *event) override;
-//    void contextMenuEvent(QContextMenuEvent *event) override;
+
 
 private:
+    bool cut=false;
     Ui::MainWindow *ui;
-    QFileSystemModel *rhsmodel;
-    QFileSystemModel *lhsmodel;
+    QFileSystemModel *model;
     QAction *newDirAct;
     QAction *newFileAct;
     QAction *aboutAct;
@@ -72,13 +74,17 @@ private:
     QAction *deleteAct;
     QAction *editAct;
     QAction *copyAct;
-    QAction *pasteAct;
+    QAction *cutAct;
+    QAction *rhsPasteAct;
+    QAction *lhsPasteAct;
     QMenu *fileMenu;
     QMenu *helpMenu;
 
 
     QFileInfo copyInfo;
     QModelIndex selectedIndex;
+    QString curr_lhs_path;
+    QString curr_rhs_path;
 
 public:
 
