@@ -1,4 +1,4 @@
-# <img src="https://github.com/neverlandjt/kcc/blob/master/kcc_logo.png?raw=true " height="40px">KCC 
+# <img src="static/kcc_logo.png" height="40px">KCC 
 
 [![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://travis-ci.org/joemccann/dillinger)
 
@@ -6,6 +6,23 @@ KCC stands for Kai Cumber Commander and it is a crossplatform GUI file manager.
 
 ### Prerequisites:
 * Qt 5.11.0 or later
+* Libarchive
+
+
+### Installation :hammer:
+
+1. Clone Project 
+2. Compile the Project
+```sh
+$ mkdir build && cd build
+$ cmake -G"Unix Makefiles" ..
+$ make
+```
+3. Run 
+```sh
+ ./kcc
+```
+
 
 ### Team
 
