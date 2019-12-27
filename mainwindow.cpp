@@ -18,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent)
     model->setRootPath(sPath);
     model->setFilter(QDir::AllEntries | QDir::NoDot);
     ui->lhsView->setModel(model);
+//    ui->lhsView->setShowGrid(false);
     ui->lhsView->setRootIndex(model->index(sPath));
     ui->lhsView->verticalHeader()->setVisible(false); // hide index column
 
@@ -132,15 +133,17 @@ void MainWindow::customMenuRequested(const QPoint &pos){
         {
             menu->addAction(editAct);
             menu->addAction(deleteAct);
+            menu->addSeparator();
+            menu->addAction(moveAct);
+            menu->addSeparator();
             menu->addAction(copyAct);
             menu->addAction(cutAct);
         }
-        if (view ==  ui->rhsView){
-             menu->addAction(rhsPasteAct);
-        }
-        else if (view ==  ui->lhsView){
-             menu->addAction(lhsPasteAct);
-        }
+
+        if (view ==  ui->rhsView) curr_context=context::rhs;
+        else if (view ==  ui->lhsView) curr_context=context::lhs;
+
+         menu->addAction(PasteAct);
         menu->popup(view->viewport()->mapToGlobal(pos));
 
 

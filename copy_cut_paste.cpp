@@ -1,5 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <QFileDialog>
+#include <QInputDialog>
+#include <QMessageBox>
 
 
 void copyRecursive(QString src, QString dest)
@@ -28,14 +31,16 @@ void copyRecursive(QString src, QString dest)
 }
 
 
-void MainWindow::rhsPasteFile() {
-     qDebug()<< cut;
+
+
+void MainWindow::pasteTo( const QString& dest){
+
     if (copyInfo.isDir())
-        copyRecursive(copyInfo.filePath(),curr_rhs_path+"/"+copyInfo.fileName());
+        copyRecursive(copyInfo.filePath(),dest);
     else
-        QFile::copy(copyInfo.filePath(),curr_rhs_path+"/"+copyInfo.fileName());
+        QFile::copy(copyInfo.filePath(),dest);
     if (cut){
-        QString tmp = curr_rhs_path+"/"+copyInfo.fileName();
+        QString tmp = dest;
         if (copyInfo.isDir()){
             QDir dir(copyInfo.absoluteFilePath());
             dir.removeRecursively();
@@ -44,10 +49,19 @@ void MainWindow::rhsPasteFile() {
             QDir dir(copyInfo.absolutePath());
             dir.remove(copyInfo.fileName());
         }
-        qDebug()<< tmp;
+
+        if (move)
+            copyInfo = QFileInfo("");
+        else
+            copyInfo = QFileInfo(tmp);
         cut = false;
+        move=false;
     }
+
 }
+
+
+
 
 void MainWindow::cutFile(){
      copyInfo = model->fileInfo(selectedIndex);
@@ -55,15 +69,29 @@ void MainWindow::cutFile(){
 }
 
 
-void MainWindow::lhsPasteFile() {
-    if (copyInfo.isDir())
-        copyRecursive(copyInfo.filePath(),curr_lhs_path+"/"+copyInfo.fileName());
-    else
-        QFile::copy(copyInfo.filePath(),curr_lhs_path+"/"+copyInfo.fileName());
+void MainWindow::PasteFile() {
+    QString dest = curr_context ? curr_rhs_path : curr_lhs_path;
+ pasteTo(dest+"/"+copyInfo.fileName());
 }
+
+
+void MainWindow::moveFile(){
+
+    bool ok;
+    copyInfo =  model->fileInfo(selectedIndex);
+    move=true;
+    cut=true;
+    QString dest = !curr_context ? curr_rhs_path : curr_lhs_path;
+    QString text = QInputDialog::getText(this, tr("Move file/directory"),
+                                         tr("Destination:"), QLineEdit::Normal,
+                                         dest, &ok);
+    if (ok && !text.isEmpty() && QDir(text).exists())
+        pasteTo(text+"/"+copyInfo.fileName());
+    else
+        return;
+}
+
 
 void MainWindow::copyFile() {
    copyInfo = model->fileInfo(selectedIndex);
-//   qDebug() << copyInfo.filePath();
-
 }

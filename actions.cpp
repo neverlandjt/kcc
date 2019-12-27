@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include<QDebug>
 
 
 
@@ -40,17 +41,22 @@ void MainWindow::createActions() {
 
     connect(copyAct, SIGNAL(triggered()), this, SLOT(copyFile()));
 
-    rhsPasteAct = new QAction(("Paste"), this);
+
+    PasteAct = new QAction(("Paste"), this);
 //    pasteAct->setShortcuts(QKeySequence::Paste);
 
-    connect(rhsPasteAct, SIGNAL(triggered()), this, SLOT(rhsPasteFile()));
-
-    lhsPasteAct = new QAction(("Paste"), this);
-//    pasteAct->setShortcuts(QKeySequence::Paste);
-
-    connect(lhsPasteAct, SIGNAL(triggered()), this, SLOT(lhsPasteFile()));
+    connect(PasteAct, SIGNAL(triggered()), this, SLOT(PasteFile()));
 
 
    cutAct =new QAction(("Cut"), this);
-    connect(cutAct, SIGNAL(triggered()), this, SLOT(cutFile()));
+   connect(cutAct, SIGNAL(triggered()), this, SLOT(cutFile()));
+
+
+    moveAct = new QAction(("Move"), this);
+    connect(moveAct, &QAction::triggered, this, &MainWindow::moveFile);
 }
+
+
+
+
+
