@@ -15,7 +15,7 @@ QT_END_NAMESPACE
 
 
 class MainWindow : public QMainWindow {
-    Q_OBJECT
+Q_OBJECT
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -24,7 +24,8 @@ public:
 
 private
     slots:
-            void
+
+    void
 
     createActions();
 
@@ -43,13 +44,19 @@ private
     void deleteFile();
 
     void editRecord();
+
     void pasteFile();
+
     void moveFile();
-    void pasteTo( const QString& dest);
+
+    void pasteTo(const QString &dest);
 
     void copyFile();
+
     void on_view_doubleClicked(const QModelIndex &index);
+
     void extractArchive();
+
     void extractArchiveTo();
 //    void openFile();
 //    void on_lhsView_doubleClicked(const QModelIndex &index);
@@ -70,9 +77,9 @@ protected:
 
 
 private:
-    bool move=false;
+    bool move = false;
 
-    bool cut=false;
+    bool cut = false;
     Ui::MainWindow *ui;
     QFileSystemModel *model;
     QAction *newDirAct;
@@ -97,7 +104,7 @@ private:
     QModelIndex selectedIndex;
     QString curr_lhs_path;
     QString curr_rhs_path;
-    bool curr_context=0;
+    bool curr_context = 0;
 
 
 public:
@@ -105,6 +112,8 @@ public:
 
 };
 
-enum context{lhs=0, rhs=1 };
+enum context {
+    lhs = 0, rhs = 1
+};
 
 #endif // MAINWINDOW_H

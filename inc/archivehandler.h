@@ -17,21 +17,20 @@ private:
 public:
     Archive();
 
-    explicit Archive(const QString filename);
+    explicit Archive(const QString& filename);
 
     ~Archive();
 
-    void open(const QString filename);
+    void open(const QString& filename);
 
     void close();
 
-    int copyData(struct archive* aw);
-    int extract(const QString file_to);
+    int copyData(struct archive *aw);
+
+    int extract(const QString& file_to);
 
 
 };
-
-
 
 
 #endif //KCC_ARCHIVEHANDLER_H
