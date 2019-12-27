@@ -1,7 +1,7 @@
 #include "inc/archivehandler.h"
 #include <QDebug>
 
-bool isArchive(const QString& filename) {
+bool isArchive(const QString &filename) {
     QStringList splitted_name = filename.split('.');
     if (splitted_name.length() < 2) {
         return false;

@@ -82,22 +82,22 @@ private:
     bool cut = false;
     Ui::MainWindow *ui;
     QFileSystemModel *model;
-    QAction *newDirAct;
-    QAction *newFileAct;
-    QAction *aboutAct;
-    QAction *aboutQtAct;
-    QAction *exitAct;
-    QAction *deleteAct;
-    QAction *editAct;
-    QAction *copyAct;
-    QAction *cutAct;
-    QAction *moveAct;
-    QAction *pasteAct;
-    QAction *extractAct;
+    QAction *newDirAct{};
+    QAction *newFileAct{};
+    QAction *aboutAct{};
+    QAction *aboutQtAct{};
+    QAction *exitAct{};
+    QAction *deleteAct{};
+    QAction *editAct{};
+    QAction *copyAct{};
+    QAction *cutAct{};
+    QAction *moveAct{};
+    QAction *pasteAct{};
+    QAction *extractAct{};
 //    QAction *openAct;
-    QAction *extractToAct;
-    QMenu *fileMenu;
-    QMenu *helpMenu;
+    QAction *extractToAct{};
+    QMenu *fileMenu{};
+    QMenu *helpMenu{};
 
 
     QFileInfo copyInfo;

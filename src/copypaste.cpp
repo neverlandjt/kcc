@@ -5,7 +5,8 @@
 #include <QMessageBox>
 
 
-void copyRecursive(QString src, QString dest) {
+void copyRecursive(const QString &src, const QString &dest) {
+
     QDir source(src);
     QDir destination(dest);
     QString srcName, destName;
@@ -56,16 +57,16 @@ bool MainWindow::overwriteExisted(const QString &path) {
 
 
 void MainWindow::pasteTo(const QString &dest) {
-    if (!overwriteExisted(dest))
-        return;
+    if (!overwriteExisted(dest)) return;
+
     if (copyInfo.isDir())
         copyRecursive(copyInfo.filePath(), dest);
     else
         QFile::copy(copyInfo.filePath(), dest);
+
     if (cut) {
-        QString tmp = dest;
         removeItem(copyInfo);
-        copyInfo = move ? QFileInfo("") : QFileInfo(tmp);
+        copyInfo = move ? QFileInfo("") : QFileInfo(dest);
         cut = false;
         move = false;
     }
@@ -81,7 +82,7 @@ void MainWindow::cutFile() {
 
 void MainWindow::pasteFile() {
     QString dest = curr_context ? curr_rhs_path : curr_lhs_path;
-    pasteTo(dest + "/" + copyInfo.fileName());
+    pasteTo(dest + QDir::separator() + copyInfo.fileName());
 }
 
 
@@ -95,7 +96,7 @@ void MainWindow::moveFile() {
                                          tr("Destination:"), QLineEdit::Normal,
                                          dest, &ok);
     if (ok && !text.isEmpty() && QDir(text).exists())
-        pasteTo(text + "/" + copyInfo.fileName());
+        pasteTo(text + QDir::separator() + copyInfo.fileName());
     else
         return;
 }

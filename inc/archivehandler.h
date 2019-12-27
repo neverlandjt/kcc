@@ -6,7 +6,7 @@
 #include <QString>
 #include <string>
 
-bool isArchive(const QString filename);
+bool isArchive(const QString& filename);
 
 
 class Archive {
