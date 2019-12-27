@@ -38,6 +38,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->lhsView, SIGNAL(clicked(QModelIndex)), this, SLOT(on_click(QModelIndex)));
     connect(ui->rhsView, SIGNAL(clicked(QModelIndex)), this, SLOT(on_click(QModelIndex)));
 
+    connect(ui->lhsView, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(on_view_doubleClicked(QModelIndex)));
+    connect(ui->rhsView, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(on_view_doubleClicked(QModelIndex)));
+
 
     connect(ui->lhsView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(customMenuRequested( QPoint)));
     connect(ui->rhsView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(customMenuRequested(QPoint)));
@@ -91,8 +94,6 @@ void MainWindow::addMenu() {
 }
 
 
-
-
 void MainWindow::newFile() {
     bool ok;
 
@@ -129,7 +130,6 @@ MainWindow::~MainWindow() {
 }
 
 
-
 void MainWindow::customMenuRequested(const QPoint &pos){
         QMenu *menu = new QMenu(this);
         QTableView* view = qobject_cast<QTableView *>(sender());
@@ -147,8 +147,10 @@ void MainWindow::customMenuRequested(const QPoint &pos){
             menu->addAction(cutAct);
             const QString filename = model->fileInfo(selectedIndex).fileName();
             if (isArchive(filename)){
+                menu->addSeparator();
                 menu->addAction(extractAct);
                 menu->addAction(extractToAct);
+                menu->addSeparator();
             }
         }
         if (view ==  ui->rhsView) curr_context=context::rhs;
@@ -190,6 +192,7 @@ void MainWindow::extractArchive() {
 }
 
 
+
 void MainWindow::editRecord() {
     QDir curr_dir = model->fileInfo(selectedIndex).dir();
         bool ok;
@@ -208,36 +211,32 @@ void MainWindow::deleteFile() {
         reply = QMessageBox::question(this, "Delete", "Are you sure? This action cannot be undone.",
                                       QMessageBox::Yes|QMessageBox::No);
         if (reply == QMessageBox::Yes) {
-          qDebug() << "Yes was clicked";
-          if (!model->remove(selectedIndex)) {
-              qDebug() << "not removed";
-          }
-        } else {
-          qDebug() << "Yes was *not* clicked";
-        }
-
-}
-
-
-void MainWindow::navigate(QTableView  *view, const QModelIndex &index, QString& curr_path ){
-        QString sPath = model->fileInfo(index).absoluteFilePath();
-        if (model->fileInfo(index).isDir()) {
-            curr_path = sPath;
-            model->index(sPath);
-            view->setRootIndex(model->index(sPath));
-        } else if (model->fileInfo(index).isFile()) {
-            QDesktopServices desk;
-            desk.openUrl(QUrl(sPath.prepend("file:///")));
+          if (!model->remove(selectedIndex))
+              QMessageBox::critical(this, tr("Error"),
+                                          tr("Cannot delete this file."),
+                                          QMessageBox::Ok );
         }
 }
 
-void MainWindow::on_lhsView_doubleClicked(const QModelIndex &index) {
-    navigate(ui->lhsView, index,  curr_lhs_path);
+
+
+void MainWindow::on_view_doubleClicked(const QModelIndex &index) {
+    QString sPath = model->fileInfo(index).absoluteFilePath();
+    QTableView* view = qobject_cast<QTableView *>(sender());
+    if (model->fileInfo(index).isDir()) {
+
+        if (view ==  ui->rhsView) curr_rhs_path=sPath;
+        else if (view ==  ui->lhsView) curr_lhs_path=sPath;
+
+        model->index(sPath);
+        view->setRootIndex(model->index(sPath));
+    } else if (model->fileInfo(index).isFile()) {
+        QDesktopServices desk;
+        desk.openUrl(QUrl(sPath.prepend("file:///")));
+    }
 }
 
-void MainWindow::on_rhsView_doubleClicked(const QModelIndex &index) {
-navigate(ui->rhsView, index,  curr_rhs_path);
-}
+
 
 void MainWindow::on_click(const QModelIndex &index)
 {

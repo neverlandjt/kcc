@@ -48,13 +48,13 @@ private
     void pasteTo( const QString& dest);
 
     void copyFile();
-
+    void on_view_doubleClicked(const QModelIndex &index);
     void extractArchive();
     void extractArchiveTo();
+//    void openFile();
+//    void on_lhsView_doubleClicked(const QModelIndex &index);
 
-    void on_lhsView_doubleClicked(const QModelIndex &index);
-
-    void on_rhsView_doubleClicked(const QModelIndex &index);
+//    void on_rhsView_doubleClicked(const QModelIndex &index);
 
     void cutFile();
 
@@ -62,7 +62,7 @@ private
 
 
     void on_click(const QModelIndex &index);
-    void navigate(QTableView  *view, const QModelIndex &index, QString& curr_path );
+//    void navigate(QTableView  *view, const QModelIndex &index, QString& curr_path );
 
 
 protected:
@@ -87,6 +87,7 @@ private:
     QAction *moveAct;
     QAction *pasteAct;
     QAction *extractAct;
+//    QAction *openAct;
     QAction *extractToAct;
     QMenu *fileMenu;
     QMenu *helpMenu;
