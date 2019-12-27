@@ -69,7 +69,7 @@ void MainWindow::cutFile(){
 }
 
 
-void MainWindow::PasteFile() {
+void MainWindow::pasteFile() {
     QString dest = curr_context ? curr_rhs_path : curr_lhs_path;
  pasteTo(dest+"/"+copyInfo.fileName());
 }
