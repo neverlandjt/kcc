@@ -30,37 +30,53 @@ void copyRecursive(QString src, QString dest)
     }
 }
 
+void removeItem(const QFileInfo& file){
+    if (file.isDir()){
+        QDir dir(file.absoluteFilePath());
+        dir.removeRecursively();
+    }
+    else{
+        QDir dir(file.absolutePath());
+        dir.remove(file.fileName());
+    }
+
+}
+
+bool MainWindow::overwrite_existed(const QString &path){
+    if (QFile::exists(path) || QDir(path).exists()){
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this, "Warning", "File with this name already exists. Do you want to overwrite it?",
+                                  QMessageBox::Yes|QMessageBox::No);
+     if (reply == QMessageBox::Yes){
+         removeItem(QFileInfo(path));
+         return true;
+     }
+     else
+         return false;
+
+}
+    return true;
+}
+
 
 
 
 void MainWindow::pasteTo( const QString& dest){
-
+    if(!overwrite_existed(dest))
+        return;
     if (copyInfo.isDir())
         copyRecursive(copyInfo.filePath(),dest);
     else
         QFile::copy(copyInfo.filePath(),dest);
     if (cut){
         QString tmp = dest;
-        if (copyInfo.isDir()){
-            QDir dir(copyInfo.absoluteFilePath());
-            dir.removeRecursively();
-        }
-        else{
-            QDir dir(copyInfo.absolutePath());
-            dir.remove(copyInfo.fileName());
-        }
-
-        if (move)
-            copyInfo = QFileInfo("");
-        else
-            copyInfo = QFileInfo(tmp);
+        removeItem(copyInfo);
+        copyInfo = move? QFileInfo(""):QFileInfo(tmp);
         cut = false;
         move=false;
     }
 
 }
-
-
 
 
 void MainWindow::cutFile(){
@@ -69,14 +85,13 @@ void MainWindow::cutFile(){
 }
 
 
-void MainWindow::pasteFile() {
+void MainWindow::PasteFile() {
     QString dest = curr_context ? curr_rhs_path : curr_lhs_path;
  pasteTo(dest+"/"+copyInfo.fileName());
 }
 
 
 void MainWindow::moveFile(){
-
     bool ok;
     copyInfo =  model->fileInfo(selectedIndex);
     move=true;
