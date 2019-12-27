@@ -42,7 +42,7 @@ void removeItem(const QFileInfo& file){
 
 }
 
-bool MainWindow::overwrite_existed(const QString &path){
+bool MainWindow::overwriteExisted(const QString &path){
     if (QFile::exists(path) || QDir(path).exists()){
     QMessageBox::StandardButton reply;
     reply = QMessageBox::question(this, "Warning", "File with this name already exists. Do you want to overwrite it?",
@@ -62,7 +62,7 @@ bool MainWindow::overwrite_existed(const QString &path){
 
 
 void MainWindow::pasteTo( const QString& dest){
-    if(!overwrite_existed(dest))
+    if(!overwriteExisted(dest))
         return;
     if (copyInfo.isDir())
         copyRecursive(copyInfo.filePath(),dest);
@@ -85,7 +85,7 @@ void MainWindow::cutFile(){
 }
 
 
-void MainWindow::PasteFile() {
+void MainWindow::pasteFile() {
     QString dest = curr_context ? curr_rhs_path : curr_lhs_path;
  pasteTo(dest+"/"+copyInfo.fileName());
 }

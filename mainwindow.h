@@ -9,7 +9,6 @@
 #include <QApplication>
 #include<QTableView>
 
-
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -44,12 +43,14 @@ private
     void deleteFile();
 
     void editRecord();
+    void pasteFile();
+    void moveFile();
+    void pasteTo( const QString& dest);
 
     void copyFile();
 
-     void PasteFile();
-
-     void moveFile();
+    void extractArchive();
+    void extractArchiveTo();
 
     void on_lhsView_doubleClicked(const QModelIndex &index);
 
@@ -57,58 +58,52 @@ private
 
     void cutFile();
 
-    void pasteTo( const QString& dest);
+    bool overwriteExisted(const QString &path);
+
 
     void on_click(const QModelIndex &index);
-
     void navigate(QTableView  *view, const QModelIndex &index, QString& curr_path );
+
 
 protected:
     void closeEvent(QCloseEvent *event) override;
-    bool overwrite_existed(const QString &path);
 
 
 private:
-    // flags for cut/move
     bool move=false;
+
     bool cut=false;
-
-
     Ui::MainWindow *ui;
     QFileSystemModel *model;
-
-
     QAction *newDirAct;
     QAction *newFileAct;
     QAction *aboutAct;
     QAction *aboutQtAct;
     QAction *exitAct;
-
-    //context menu actions
     QAction *deleteAct;
     QAction *editAct;
     QAction *copyAct;
     QAction *cutAct;
     QAction *moveAct;
-    QAction *PasteAct;
-
-
-    // create menu
+    QAction *pasteAct;
+    QAction *extractAct;
+    QAction *extractToAct;
     QMenu *fileMenu;
     QMenu *helpMenu;
 
 
     QFileInfo copyInfo;
     QModelIndex selectedIndex;
-
     QString curr_lhs_path;
     QString curr_rhs_path;
     bool curr_context=0;
 
 
+public:
 
 
 };
 
 enum context{lhs=0, rhs=1 };
+
 #endif // MAINWINDOW_H

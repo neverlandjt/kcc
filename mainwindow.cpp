@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "archivehandler.h"
 #include <QDesktopServices>
 #include <QUrl>
 #include <QFileDialog>
@@ -18,7 +19,6 @@ MainWindow::MainWindow(QWidget *parent)
     model->setRootPath(sPath);
     model->setFilter(QDir::AllEntries | QDir::NoDot);
     ui->lhsView->setModel(model);
-//    ui->lhsView->setShowGrid(false);
     ui->lhsView->setRootIndex(model->index(sPath));
     ui->lhsView->verticalHeader()->setVisible(false); // hide index column
 
@@ -69,6 +69,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 
 void MainWindow::addMenu() {
+    QTableView* view = qobject_cast<QTableView *>(sender());
+
     fileMenu = menuBar()->addMenu(tr("&File"));
 
     auto submenu = fileMenu->addMenu("Create");
@@ -82,6 +84,10 @@ void MainWindow::addMenu() {
     helpMenu->addAction(aboutAct);
     helpMenu->addAction(aboutQtAct);
 
+    if (view ==  ui->rhsView) curr_context=context::rhs;
+    else if (view ==  ui->lhsView) curr_context=context::lhs;
+
+
 }
 
 
@@ -93,7 +99,7 @@ void MainWindow::newFile() {
     QString text = QInputDialog::getText(this, tr("Create new file"),
                                          tr("File name:"), QLineEdit::Normal,
                                          "New File", &ok);
-    QFile file(QDir::currentPath() + '/' + text);
+    QFile file(curr_context ? curr_rhs_path : curr_lhs_path + '/' + text);
 
     if (ok && !text.isEmpty() && !file.exists())
         file.open(QIODevice::WriteOnly);
@@ -102,7 +108,7 @@ void MainWindow::newFile() {
 }
 
 void MainWindow::newDir() {
-    QDir dir = QDir::current();
+    QDir dir(curr_context ? curr_rhs_path : curr_lhs_path);
     bool ok;
     QString text = QInputDialog::getText(this, tr("Create new directory"),
                                          tr("Dir name:"), QLineEdit::Normal,
@@ -136,23 +142,55 @@ void MainWindow::customMenuRequested(const QPoint &pos){
             menu->addSeparator();
             menu->addAction(moveAct);
             menu->addSeparator();
+
             menu->addAction(copyAct);
             menu->addAction(cutAct);
+            const QString filename = model->fileInfo(selectedIndex).fileName();
+            if (isArchive(filename)){
+                menu->addAction(extractAct);
+                menu->addAction(extractToAct);
+            }
         }
-
         if (view ==  ui->rhsView) curr_context=context::rhs;
         else if (view ==  ui->lhsView) curr_context=context::lhs;
 
-         menu->addAction(PasteAct);
-         copyInfo.exists() ?  PasteAct->setDisabled(false): PasteAct->setDisabled(true);
+         menu->addAction(pasteAct);
+         copyInfo.exists() ?  pasteAct->setDisabled(false): pasteAct->setDisabled(true);
+
+
         menu->popup(view->viewport()->mapToGlobal(pos));
 
 
     }
 
 
-void MainWindow::editRecord() {
+void MainWindow::extractArchiveTo() {
+    QString arcName = model->fileName(selectedIndex);
+    int indx = arcName.lastIndexOf('.');
+    bool ok;
+    QString text = QInputDialog::getText(this, tr("Extract To"),
+                                         tr("Destination:"), QLineEdit::Normal,
+                                         arcName.mid(0, indx), &ok);
 
+    QDir dir = model->fileInfo(selectedIndex).dir();
+    if (!dir.exists(text))
+        dir.mkdir(text);
+
+    if (ok && !text.isEmpty()) {
+        Archive a(model->filePath(selectedIndex));
+        a.extract(model->fileInfo(selectedIndex).path() + '/' + text);
+    }
+
+}
+
+void MainWindow::extractArchive() {
+    Archive a(model->filePath(selectedIndex));
+    a.extract(model->fileInfo(selectedIndex).path() + '/');
+
+}
+
+
+void MainWindow::editRecord() {
     QDir curr_dir = model->fileInfo(selectedIndex).dir();
         bool ok;
         QString oldName = model->fileName(selectedIndex);
