@@ -53,7 +53,8 @@ private
 
     void copyFile();
 
-    void on_view_doubleClicked(const QModelIndex &index);
+  void on_view_doubleClicked(const QModelIndex &index);
+
 
     void extractArchive();
 
@@ -102,6 +103,7 @@ private:
 
     QFileInfo copyInfo;
     QModelIndex selectedIndex;
+    QModelIndexList selectedIndexes;
     QString curr_lhs_path;
     QString curr_rhs_path;
     bool curr_context = 0;

@@ -41,6 +41,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lhsView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->rhsView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
+    ui->lhsView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    ui->rhsView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+
 
     connect(ui->lhsView, SIGNAL(clicked(QModelIndex)), this, SLOT(on_click(QModelIndex)));
     connect(ui->rhsView, SIGNAL(clicked(QModelIndex)), this, SLOT(on_click(QModelIndex)));
@@ -48,6 +51,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->lhsView, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(on_view_doubleClicked(QModelIndex)));
     connect(ui->rhsView, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(on_view_doubleClicked(QModelIndex)));
+
 
 
     connect(ui->lhsView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(customMenuRequested(QPoint)));
@@ -142,26 +146,32 @@ void MainWindow::customMenuRequested(const QPoint &pos) {
     auto *menu = new QMenu(this);
     auto *view = qobject_cast<QTableView *>(sender());
     selectedIndex = view->indexAt(pos);
+    selectedIndexes = view->selectionModel()->selectedRows();
+    qDebug() << selectedIndexes.size();
+            foreach (QModelIndex index, selectedIndexes) {
+            qDebug() << model->fileInfo(index).absoluteFilePath();
+        }
 
-    if (view->indexAt(pos).isValid()) {
-//            menu->addAction(openAct);
-        menu->addAction(editAct);
-        menu->addAction(deleteAct);
-        menu->addSeparator();
-
+    if (selectedIndexes.size() >= 1) {
         menu->addAction(moveAct);
         menu->addSeparator();
 
         menu->addAction(copyAct);
         menu->addAction(cutAct);
-
-        const QString filename = model->fileInfo(selectedIndex).fileName();
-
-        if (isArchive(filename)) {
+        if (selectedIndexes.size() == 1) {
+//            menu->addAction(openAct);
+            menu->addAction(editAct);
+            menu->addAction(deleteAct);
             menu->addSeparator();
-            menu->addAction(extractAct);
-            menu->addAction(extractToAct);
-            menu->addSeparator();
+
+            const QString filename = model->fileInfo(selectedIndexes[0]).fileName();
+
+            if (isArchive(filename)) {
+                menu->addSeparator();
+                menu->addAction(extractAct);
+                menu->addAction(extractToAct);
+                menu->addSeparator();
+            }
         }
     }
     if (view == ui->rhsView) curr_context = context::rhs;
@@ -235,6 +245,7 @@ void MainWindow::deleteFile() {
 void MainWindow::on_view_doubleClicked(const QModelIndex &index) {
     QString sPath = model->fileInfo(index).absoluteFilePath();
     auto *view = qobject_cast<QTableView *>(sender());
+    selectedIndexes.clear();
 
     if (model->fileInfo(index).isDir()) {
         if (view == ui->rhsView) curr_rhs_path = sPath;
@@ -249,4 +260,5 @@ void MainWindow::on_view_doubleClicked(const QModelIndex &index) {
 
 void MainWindow::on_click(const QModelIndex &index) {
     selectedIndex = index;
+
 }
