@@ -8,6 +8,7 @@
 #include <QMessageBox>
 
 
+
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent), ui(new Ui::MainWindow) {
 
@@ -145,83 +146,75 @@ MainWindow::~MainWindow() {
 void MainWindow::customMenuRequested(const QPoint &pos) {
     auto *menu = new QMenu(this);
     auto *view = qobject_cast<QTableView *>(sender());
-    selectedIndex = view->indexAt(pos);
     selectedIndexes = view->selectionModel()->selectedRows();
-    qDebug() << selectedIndexes.size();
-            foreach (QModelIndex index, selectedIndexes) {
-            qDebug() << model->fileInfo(index).absoluteFilePath();
-        }
 
-    if (selectedIndexes.size() >= 1) {
+
+      if (selectedIndexes.size() >= 1)
+{
         menu->addAction(moveAct);
-        menu->addSeparator();
 
         menu->addAction(copyAct);
         menu->addAction(cutAct);
-        if (selectedIndexes.size() == 1) {
+          menu->addSeparator();
+         menu->addAction(deleteAct);
+    if (selectedIndexes.size() == 1) {
 //            menu->addAction(openAct);
-            menu->addAction(editAct);
-            menu->addAction(deleteAct);
+        menu->addAction(editAct);
+
+        menu->addSeparator();
+
+        const QString filename = model->fileInfo(selectedIndexes[0]).fileName();
+
+        if (isArchive(filename)) {
             menu->addSeparator();
-
-            const QString filename = model->fileInfo(selectedIndexes[0]).fileName();
-
-            if (isArchive(filename)) {
-                menu->addSeparator();
-                menu->addAction(extractAct);
-                menu->addAction(extractToAct);
-                menu->addSeparator();
-            }
+            menu->addAction(extractAct);
+            menu->addAction(extractToAct);
+            menu->addSeparator();
         }
-    }
+    }}
     if (view == ui->rhsView) curr_context = context::rhs;
     else if (view == ui->lhsView) curr_context = context::lhs;
 
     menu->addAction(pasteAct);
-    copyInfo.exists() ? pasteAct->setDisabled(false) : pasteAct->setDisabled(true);
+    pastable ? pasteAct->setDisabled(false) : pasteAct->setDisabled(true);
 
     menu->popup(view->viewport()->mapToGlobal(pos));
 
 }
 
-//void MainWindow::openFile() {
-//     QTableView* view = qobject_cast<QTableView *>(sender());
-//    emit view->doubleClick()
-//}
-
 
 void MainWindow::extractArchiveTo() {
     bool ok;
 
-    QString arcName = model->fileName(selectedIndex);
+    QString arcName = model->fileName(selectedIndexes[0]);
     int index = arcName.lastIndexOf('.');
 
     QString text = QInputDialog::getText(this, tr("Extract To"),
                                          tr("Destination:"), QLineEdit::Normal,
                                          arcName.mid(0, index), &ok);
 
-    QDir dir = model->fileInfo(selectedIndex).dir();
+    QDir dir = model->fileInfo(selectedIndexes[0]).dir();
 
     if (!dir.exists(text)) dir.mkdir(text);
 
     if (ok && !text.isEmpty()) {
-        Archive a(model->filePath(selectedIndex));
-        a.extract(model->fileInfo(selectedIndex).path() + '/' + text);
+        Archive a(model->filePath(selectedIndexes[0]));
+        a.extract(model->fileInfo(selectedIndexes[0]).path() + '/' + text);
     }
 
 }
 
 void MainWindow::extractArchive() {
-    Archive a(model->filePath(selectedIndex));
-    a.extract(model->fileInfo(selectedIndex).path() + '/');
+    Archive a(model->filePath(selectedIndexes[0]));
+    a.extract(model->fileInfo(selectedIndexes[0]).path() + '/');
 }
 
 
 void MainWindow::editRecord() {
     bool ok;
 
-    QDir curr_dir = model->fileInfo(selectedIndex).dir();
-    QString oldName = model->fileName(selectedIndex);
+    QDir curr_dir = model->fileInfo(selectedIndexes[0]).dir();
+    QString oldName = model->fileName(selectedIndexes[0]);
 
     QString text = QInputDialog::getText(this, tr("Rename file"),
                                          tr("New name:"), QLineEdit::Normal,
@@ -230,22 +223,26 @@ void MainWindow::editRecord() {
     if (ok && !text.isEmpty()) curr_dir.rename(oldName, text);
 }
 
+
 void MainWindow::deleteFile() {
     QMessageBox::StandardButton reply;
     reply = QMessageBox::question(this, "Delete", "Are you sure? This action cannot be undone.",
                                   QMessageBox::Yes | QMessageBox::No);
     if (reply == QMessageBox::Yes) {
-        if (!model->remove(selectedIndex))
-            QMessageBox::critical(this, tr("Error"),
-                                  tr("Cannot delete this file."), QMessageBox::Ok);
-    }
+        foreach (QModelIndex index, selectedIndexes) {
+            if (!model->remove(index))
+                QMessageBox::critical(this, tr("Error"),
+                                      tr("Cannot delete this file."), QMessageBox::Ok);
+        }
+        }
+
 }
 
 
 void MainWindow::on_view_doubleClicked(const QModelIndex &index) {
     QString sPath = model->fileInfo(index).absoluteFilePath();
     auto *view = qobject_cast<QTableView *>(sender());
-    selectedIndexes.clear();
+
 
     if (model->fileInfo(index).isDir()) {
         if (view == ui->rhsView) curr_rhs_path = sPath;
@@ -259,6 +256,6 @@ void MainWindow::on_view_doubleClicked(const QModelIndex &index) {
 
 
 void MainWindow::on_click(const QModelIndex &index) {
-    selectedIndex = index;
+//    selectedIndexes[0] = index;
 
 }
