@@ -60,10 +60,10 @@ private
     void extractArchive();
 
     void extractArchiveTo();
-//    void openFile();
-//    void on_lhsView_doubleClicked(const QModelIndex &index);
 
-//    void on_rhsView_doubleClicked(const QModelIndex &index);
+    void linePressed();
+
+
 
     void cutFile();
 
@@ -72,7 +72,8 @@ private
     void find();
 
     void on_click(const QModelIndex &index);
-//    void navigate(QTableView  *view, const QModelIndex &index, QString& curr_path );
+
+    void changeContext();
 
 
 protected:
@@ -99,11 +100,10 @@ private:
     QAction *pasteAct{};
     QAction *extractAct{};
     QAction *findAct{};
-//    QAction *openAct;
     QAction *extractToAct{};
     QMenu *fileMenu{};
     QMenu *helpMenu{};
-    QMenu *findMenu{};
+    QMenu *toolsMenu{};
 
 
     QList<QFileInfo> copyInformation = {};
@@ -112,7 +112,7 @@ private:
     QString curr_rhs_path;
     bool curr_context = 0;
     std::function<QFileInfo(const QModelIndex &index)> transform = [&](const QModelIndex &index) {
-        return model->fileInfo(index);
+       return model->fileInfo(index);
     };
     QScopedPointer<Finder> finder;
 public:

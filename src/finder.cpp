@@ -13,6 +13,8 @@ Finder::Finder(QWidget *parent)
        ui->filesTable->setShowGrid(false);
 
        ui->filesTable->setContextMenuPolicy(Qt::CustomContextMenu);
+       ui->filenameBox->setCurrentText("*");
+       ui->searchInBox->setCurrentText(currentDir.path());
 
 }
 

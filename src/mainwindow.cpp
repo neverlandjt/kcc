@@ -45,8 +45,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lhsView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     ui->rhsView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
-    ui->lhsline->setText(curr_lhs_path);
-    ui->rhsline->setText(curr_rhs_path);
+
+
+    ui->lhsline->setCurrentText(curr_lhs_path);
+    ui->rhsline->setCurrentText(curr_rhs_path);
 
     connect(ui->lhsView, SIGNAL(clicked(QModelIndex)), this, SLOT(on_click(QModelIndex)));
     connect(ui->rhsView, SIGNAL(clicked(QModelIndex)), this, SLOT(on_click(QModelIndex)));
@@ -56,9 +58,13 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->rhsView, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(on_view_doubleClicked(QModelIndex)));
 
 
-
     connect(ui->lhsView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(customMenuRequested(QPoint)));
     connect(ui->rhsView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(customMenuRequested(QPoint)));
+
+
+    connect(ui->lhsline, SIGNAL(activated(int)), this, SLOT(linePressed()));
+    connect(ui->rhsline, SIGNAL(activated(int)), this, SLOT(linePressed()));
+
 
 
     ui->lhsView->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -101,8 +107,8 @@ void MainWindow::addMenu() {
     helpMenu->addAction(aboutAct);
     helpMenu->addAction(aboutQtAct);
 
-    findMenu = menuBar()->addMenu(tr("&Find"));
-    findMenu->addAction(findAct);
+    toolsMenu = menuBar()->addMenu(tr("&Tools"));
+    toolsMenu->addAction(findAct);
 
     if (view == ui->rhsView) curr_context = context::rhs;
     else if (view == ui->lhsView) curr_context = context::lhs;
@@ -166,7 +172,6 @@ void MainWindow::customMenuRequested(const QPoint &pos) {
         menu->addSeparator();
         menu->addAction(deleteAct);
         if (selectedIndexes.size() == 1) {
-//            menu->addAction(openAct);
             menu->addAction(editAct);
 
             menu->addSeparator();
@@ -259,8 +264,8 @@ void MainWindow::on_view_doubleClicked(const QModelIndex &index) {
 
         model->index(sPath);
         view->setRootIndex(model->index(sPath));
-        ui->rhsline->setText(curr_rhs_path);
-        ui->lhsline->setText(curr_lhs_path);
+        ui->rhsline->setCurrentText(curr_rhs_path);
+        ui->lhsline->setCurrentText(curr_lhs_path);
     } else if (model->fileInfo(index).isFile())
         QDesktopServices::openUrl(QUrl(sPath.prepend("file:///")));
 }
@@ -268,18 +273,48 @@ void MainWindow::on_view_doubleClicked(const QModelIndex &index) {
 
 void MainWindow::on_click(const QModelIndex &index) {
     auto *view = qobject_cast<QTableView *>(sender());
-    if (view == ui->rhsView) {
-        curr_context = context::rhs;
-        ui->lhsView->setStyleSheet("QHeaderView::section { background-color:white }");
-        ui->lhsView->clearSelection();
-        view->setStyleSheet("QHeaderView::section { background-color:blue }");
+    if (view == ui->rhsView) curr_context = context::rhs;
+   else if (view == ui->lhsView)  curr_context = context::lhs;
+    changeContext();
+}
 
-    } else if (view == ui->lhsView) {
-        curr_context = context::lhs;
-        ui->rhsView->setStyleSheet("QHeaderView::section { background-color:white }");
-        ui->rhsView->clearSelection();
-        view->setStyleSheet("QHeaderView::section { background-color:blue }");
+void MainWindow::linePressed(){
+    auto *line = qobject_cast<QComboBox *>(sender());
+    if (line == ui->rhsline) curr_context = context::rhs;
+   else if (line == ui->lhsline)  curr_context = context::lhs;
+    changeContext();
+    QString sPath = line->currentText();
+    QDir pathDir(sPath);
+    if (pathDir.exists())
+    {
+    if (line == ui->lhsline){
+       curr_lhs_path = sPath;
+       model->index(sPath);
+       ui->lhsView->setRootIndex(model->index(sPath));
+        }
+    else if (line == ui->rhsline){
+       curr_rhs_path = sPath;
+       model->index(sPath);
+       ui->rhsView->setRootIndex(model->index(sPath));
+        }
+
     }
+     ui->lhsline->setCurrentText(curr_lhs_path);
+     ui->rhsline->setCurrentText(curr_rhs_path);
+
+}
 
 
+
+void MainWindow::changeContext(){
+    if (curr_context == context::rhs) {
+        ui->lhsView->setStyleSheet("QHeaderView::section { border-color:white }");
+        ui->lhsView->clearSelection();
+        ui->rhsView->setStyleSheet("QHeaderView::section { border-color:blue }");
+
+    } else if (curr_context == context::lhs) {
+        ui->rhsView->setStyleSheet("QHeaderView::section { border-color:white }");
+        ui->rhsView->clearSelection();
+        ui->lhsView->setStyleSheet("QHeaderView::section { border-color:blue }");
+    }
 }
