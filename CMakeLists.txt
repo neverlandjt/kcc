@@ -17,6 +17,6 @@ if(${LibArchive_FOUND})
     include_directories(${LibArchive_INCLUDE_DIRS})
 ENDIF(${LibArchive_FOUND})
 
-add_executable(kcc src/main.cpp src/mainwindow.cpp inc/mainwindow.h src/mainwindow.ui src/archivehandler.cpp inc/archivehandler.h src/actions.cpp src/copypaste.cpp)
+add_executable(kcc src/main.cpp src/mainwindow.cpp inc/mainwindow.h src/mainwindow.ui src/archivehandler.cpp inc/archivehandler.h src/actions.cpp src/copypaste.cpp inc/finder.h src/finder.ui src/finder.cpp)
 set_target_properties(kcc PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})
 target_link_libraries(kcc PRIVATE Qt5::Widgets ${LibArchive_LIBRARIES})

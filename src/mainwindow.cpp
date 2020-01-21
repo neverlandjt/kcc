@@ -8,8 +8,9 @@
 #include <QMessageBox>
 
 
+
 MainWindow::MainWindow(QWidget *parent)
-        : QMainWindow(parent), ui(new Ui::MainWindow) {
+        : QMainWindow(parent), ui(new Ui::MainWindow), finder(new Finder) {
 
     ui->setupUi(this);
 
@@ -44,6 +45,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lhsView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     ui->rhsView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
+    ui->lhsline->setText(curr_lhs_path);
+    ui->rhsline->setText(curr_rhs_path);
 
     connect(ui->lhsView, SIGNAL(clicked(QModelIndex)), this, SLOT(on_click(QModelIndex)));
     connect(ui->rhsView, SIGNAL(clicked(QModelIndex)), this, SLOT(on_click(QModelIndex)));
@@ -98,6 +101,9 @@ void MainWindow::addMenu() {
     helpMenu->addAction(aboutAct);
     helpMenu->addAction(aboutQtAct);
 
+    findMenu = menuBar()->addMenu(tr("&Find"));
+    findMenu->addAction(findAct);
+
     if (view == ui->rhsView) curr_context = context::rhs;
     else if (view == ui->lhsView) curr_context = context::lhs;
 }
@@ -137,6 +143,10 @@ void MainWindow::about() {
                        tr("The <b>Best</b> project ever - <i>Kai Camber Commander</i>."));
 }
 
+void MainWindow::find() {
+    finder->show();
+    finder->activateWindow();
+}
 
 MainWindow::~MainWindow() {
     delete ui;
@@ -145,23 +155,20 @@ MainWindow::~MainWindow() {
 void MainWindow::customMenuRequested(const QPoint &pos) {
     auto *menu = new QMenu(this);
     auto *view = qobject_cast<QTableView *>(sender());
-    selectedIndex = view->indexAt(pos);
     selectedIndexes = view->selectionModel()->selectedRows();
-    qDebug() << selectedIndexes.size();
-            foreach (QModelIndex index, selectedIndexes) {
-            qDebug() << model->fileInfo(index).absoluteFilePath();
-        }
+
 
     if (selectedIndexes.size() >= 1) {
         menu->addAction(moveAct);
-        menu->addSeparator();
 
         menu->addAction(copyAct);
         menu->addAction(cutAct);
+        menu->addSeparator();
+        menu->addAction(deleteAct);
         if (selectedIndexes.size() == 1) {
 //            menu->addAction(openAct);
             menu->addAction(editAct);
-            menu->addAction(deleteAct);
+
             menu->addSeparator();
 
             const QString filename = model->fileInfo(selectedIndexes[0]).fileName();
@@ -178,50 +185,45 @@ void MainWindow::customMenuRequested(const QPoint &pos) {
     else if (view == ui->lhsView) curr_context = context::lhs;
 
     menu->addAction(pasteAct);
-    copyInfo.exists() ? pasteAct->setDisabled(false) : pasteAct->setDisabled(true);
+    pastable ? pasteAct->setDisabled(false) : pasteAct->setDisabled(true);
 
     menu->popup(view->viewport()->mapToGlobal(pos));
 
 }
 
-//void MainWindow::openFile() {
-//     QTableView* view = qobject_cast<QTableView *>(sender());
-//    emit view->doubleClick()
-//}
-
 
 void MainWindow::extractArchiveTo() {
     bool ok;
 
-    QString arcName = model->fileName(selectedIndex);
+    QString arcName = model->fileName(selectedIndexes[0]);
     int index = arcName.lastIndexOf('.');
 
     QString text = QInputDialog::getText(this, tr("Extract To"),
                                          tr("Destination:"), QLineEdit::Normal,
                                          arcName.mid(0, index), &ok);
 
-    QDir dir = model->fileInfo(selectedIndex).dir();
+    QDir dir = model->fileInfo(selectedIndexes[0]).dir();
 
     if (!dir.exists(text)) dir.mkdir(text);
 
     if (ok && !text.isEmpty()) {
-        Archive a(model->filePath(selectedIndex));
-        a.extract(model->fileInfo(selectedIndex).path() + '/' + text);
+        Archive a(model->filePath(selectedIndexes[0]));
+        a.extract(model->fileInfo(selectedIndexes[0]).path() + '/' + text);
     }
 
 }
 
 void MainWindow::extractArchive() {
-    Archive a(model->filePath(selectedIndex));
-    a.extract(model->fileInfo(selectedIndex).path() + '/');
+    Archive a(model->filePath(selectedIndexes[0]));
+    a.extract(model->fileInfo(selectedIndexes[0]).path() + '/');
 }
 
 
 void MainWindow::editRecord() {
     bool ok;
 
-    QDir curr_dir = model->fileInfo(selectedIndex).dir();
-    QString oldName = model->fileName(selectedIndex);
+    QDir curr_dir = model->fileInfo(selectedIndexes[0]).dir();
+    QString oldName = model->fileName(selectedIndexes[0]);
 
     QString text = QInputDialog::getText(this, tr("Rename file"),
                                          tr("New name:"), QLineEdit::Normal,
@@ -230,22 +232,26 @@ void MainWindow::editRecord() {
     if (ok && !text.isEmpty()) curr_dir.rename(oldName, text);
 }
 
+
 void MainWindow::deleteFile() {
     QMessageBox::StandardButton reply;
     reply = QMessageBox::question(this, "Delete", "Are you sure? This action cannot be undone.",
                                   QMessageBox::Yes | QMessageBox::No);
     if (reply == QMessageBox::Yes) {
-        if (!model->remove(selectedIndex))
-            QMessageBox::critical(this, tr("Error"),
-                                  tr("Cannot delete this file."), QMessageBox::Ok);
+                foreach (QModelIndex index, selectedIndexes) {
+                if (!model->remove(index))
+                    QMessageBox::critical(this, tr("Error"),
+                                          tr("Cannot delete this file."), QMessageBox::Ok);
+            }
     }
+
 }
 
 
 void MainWindow::on_view_doubleClicked(const QModelIndex &index) {
     QString sPath = model->fileInfo(index).absoluteFilePath();
     auto *view = qobject_cast<QTableView *>(sender());
-    selectedIndexes.clear();
+
 
     if (model->fileInfo(index).isDir()) {
         if (view == ui->rhsView) curr_rhs_path = sPath;
@@ -253,12 +259,27 @@ void MainWindow::on_view_doubleClicked(const QModelIndex &index) {
 
         model->index(sPath);
         view->setRootIndex(model->index(sPath));
+        ui->rhsline->setText(curr_rhs_path);
+        ui->lhsline->setText(curr_lhs_path);
     } else if (model->fileInfo(index).isFile())
         QDesktopServices::openUrl(QUrl(sPath.prepend("file:///")));
 }
 
 
 void MainWindow::on_click(const QModelIndex &index) {
-    selectedIndex = index;
+    auto *view = qobject_cast<QTableView *>(sender());
+    if (view == ui->rhsView) {
+        curr_context = context::rhs;
+        ui->lhsView->setStyleSheet("QHeaderView::section { background-color:white }");
+        ui->lhsView->clearSelection();
+        view->setStyleSheet("QHeaderView::section { background-color:blue }");
+
+    } else if (view == ui->lhsView) {
+        curr_context = context::lhs;
+        ui->rhsView->setStyleSheet("QHeaderView::section { background-color:white }");
+        ui->rhsView->clearSelection();
+        view->setStyleSheet("QHeaderView::section { background-color:blue }");
+    }
+
 
 }

@@ -66,6 +66,9 @@ void MainWindow::createActions() {
     moveAct = new QAction(("Move"), this);
     connect(moveAct, &QAction::triggered, this, &MainWindow::moveFile);
 
+    findAct = new QAction(("Find"), this);
+    connect(findAct, &QAction::triggered, this, &MainWindow::find);
+
 //      openAct = new QAction(("Open"), this);
 //      connect(moveAct, &QAction::triggered, this, &MainWindow::openFile);
 

@@ -8,6 +8,7 @@
 #include<QDebug>
 #include <QApplication>
 #include<QTableView>
+#include"finder.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -49,7 +50,7 @@ private
 
     void moveFile();
 
-    void pasteTo(const QString &dest);
+    void pasteTo(int index, const QString &dest);
 
     void copyFile();
 
@@ -68,6 +69,7 @@ private
 
     bool overwriteExisted(const QString &path);
 
+    void find();
 
     void on_click(const QModelIndex &index);
 //    void navigate(QTableView  *view, const QModelIndex &index, QString& curr_path );
@@ -78,9 +80,10 @@ protected:
 
 
 private:
-    bool move = false;
+    bool pastable = false;
+    int move = 0;
 
-    bool cut = false;
+    int cut = 0;
     Ui::MainWindow *ui;
     QFileSystemModel *model;
     QAction *newDirAct{};
@@ -95,20 +98,23 @@ private:
     QAction *moveAct{};
     QAction *pasteAct{};
     QAction *extractAct{};
+    QAction *findAct{};
 //    QAction *openAct;
     QAction *extractToAct{};
     QMenu *fileMenu{};
     QMenu *helpMenu{};
+    QMenu *findMenu{};
 
 
-    QFileInfo copyInfo;
-    QModelIndex selectedIndex;
-    QModelIndexList selectedIndexes;
+    QList<QFileInfo> copyInformation = {};
+    QModelIndexList selectedIndexes = {};
     QString curr_lhs_path;
     QString curr_rhs_path;
     bool curr_context = 0;
-
-
+    std::function<QFileInfo(const QModelIndex &index)> transform = [&](const QModelIndex &index) {
+        return model->fileInfo(index);
+    };
+    QScopedPointer<Finder> finder;
 public:
 
 
