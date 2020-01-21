@@ -1,5 +1,15 @@
-#include "inc/archivehandler.h"
 #include <QDebug>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "inc/archivehandler.h"
+
 
 bool isArchive(const QString &filename) {
     QStringList splitted_name = filename.split('.');
@@ -14,11 +24,90 @@ bool isArchive(const QString &filename) {
     return supported_formats.contains(extension);
 }
 
-Archive::Archive() {
-//    a = archive_read_new();
-//    archive_read_support_filter_all(a);
-//    archive_read_support_format_all(a);
-};
+
+int compressFiles(const QList<QPair<QString, QString>>& selectedFiles, const QString& outname, int compress){
+
+    struct archive *a;
+    struct archive_entry *entry;
+    ssize_t len;
+    int fd;
+
+    static char buff[16384];
+
+
+    const std::string filename = outname.toStdString();
+
+    a = archive_write_new();
+    switch (compress) {
+    case 'j': case 'y':
+        archive_write_add_filter_bzip2(a);
+        break;
+    case 'Z':
+        archive_write_add_filter_compress(a);
+        break;
+    case 'z':
+        archive_write_add_filter_gzip(a);
+        break;
+    default:
+        archive_write_add_filter_none(a);
+        break;
+    }
+
+    archive_write_set_format_ustar(a);
+    archive_write_open_filename(a, filename.c_str());
+    std::string curr;
+    foreach (auto paths, selectedFiles) {
+
+        curr = paths.first.toStdString();
+
+        struct archive *disk = archive_read_disk_new();
+        archive_read_disk_set_standard_lookup(disk);
+        int r;
+
+        r = archive_read_disk_open(disk, curr.c_str());
+        if (r != ARCHIVE_OK) {
+            qDebug() << archive_error_string(disk);
+            return 1;
+        }
+
+        while(true) {
+            entry = archive_entry_new();
+
+            archive_entry_set_pathname(entry, paths.second.toStdString().c_str());
+
+            r = archive_read_next_header2(disk, entry);
+            if (r == ARCHIVE_EOF)
+                break;
+            if (r != ARCHIVE_OK) {
+                qDebug() << archive_error_string(disk);
+                return 1;
+            }
+            archive_read_disk_descend(disk);
+            archive_entry_set_pathname(entry, paths.second.toStdString().c_str());
+
+            r = archive_write_header(a, entry);
+            if (r == ARCHIVE_FATAL)
+                return 1;
+            if (r > ARCHIVE_FAILED) {
+                fd = open(archive_entry_sourcepath(entry), O_RDONLY);
+                len = read(fd, buff, sizeof(buff));
+                while (len > 0) {
+                    archive_write_data(a, buff, len);
+                    len = read(fd, buff, sizeof(buff));
+                }
+                close(fd);
+            }
+            archive_entry_free(entry);
+        }
+
+        archive_read_close(disk);
+        archive_read_free(disk);
+    }
+    archive_write_close(a);
+    archive_write_free(a);
+    return 0;
+}
+
 
 Archive::Archive(const QString& filename) {
     a = archive_read_new();
@@ -27,29 +116,18 @@ Archive::Archive(const QString& filename) {
 
     if (archive_read_open_filename(a, filename.toStdString().c_str(), BLOCK_SIZE) != ARCHIVE_OK)
         qDebug() << "Can't open the archive";
-    qDebug() << "arc name " << filename.toStdString().c_str();
 }
 
 Archive::~Archive() {
-//    if (archive_read_free(a) != ARCHIVE_OK){
-//        exit(1);
-//    }
     archive_read_close(a);
     archive_read_free(a);
-//    archive_write_close(a);
-//    archive_write_free(a);
 
 }
 
-void Archive::open(const QString& filename) {
-    if (archive_read_open_filename(a, filename.toStdString().c_str(), BLOCK_SIZE) != ARCHIVE_OK)
-        qDebug() << "Can't open the archive";
-}
 
 void Archive::close() {
-//    archive_entry_free(entry);
-//    archive_read_free(a);
-
+    archive_entry_free(entry);
+    archive_read_free(a);
 }
 
 

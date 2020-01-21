@@ -8,6 +8,8 @@
 #include<QDebug>
 #include <QApplication>
 #include<QTableView>
+#include <fileapi.h>
+
 #include"finder.h"
 
 QT_BEGIN_NAMESPACE
@@ -54,26 +56,36 @@ private
 
     void copyFile();
 
-  void on_view_doubleClicked(const QModelIndex &index);
+    void compressFile();
 
+    void on_view_doubleClicked(const QModelIndex &index);
 
     void extractArchive();
 
     void extractArchiveTo();
 
+    void setUpBoxes();
+
     void linePressed();
+    void changeContext();
+
+    void changeDrive(QString drive);
 
 
-
+    void dragEnterEvent(QDragEnterEvent *e) override;
+    void dropEvent(QDropEvent *e) override;
     void cutFile();
 
+    QStringList listDirectoryRecursive(const QString& dirPath);
+
     bool overwriteExisted(const QString &path);
+
+    QList<QPair<QString, QString>> getSelectedFiles();
+
 
     void find();
 
     void on_click(const QModelIndex &index);
-
-    void changeContext();
 
 
 protected:
@@ -100,6 +112,8 @@ private:
     QAction *pasteAct{};
     QAction *extractAct{};
     QAction *findAct{};
+    QAction *compressAct{};
+//    QAction *openAct;
     QAction *extractToAct{};
     QMenu *fileMenu{};
     QMenu *helpMenu{};
@@ -112,7 +126,7 @@ private:
     QString curr_rhs_path;
     bool curr_context = 0;
     std::function<QFileInfo(const QModelIndex &index)> transform = [&](const QModelIndex &index) {
-       return model->fileInfo(index);
+        return model->fileInfo(index);
     };
     QScopedPointer<Finder> finder;
 public:

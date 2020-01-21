@@ -69,6 +69,10 @@ void MainWindow::createActions() {
     findAct = new QAction(("Find"), this);
     connect(findAct, &QAction::triggered, this, &MainWindow::find);
 
+
+    compressAct = new QAction(("Compress"), this);
+    connect(compressAct, &QAction::triggered, this, &MainWindow::compressFile);
+
 //      openAct = new QAction(("Open"), this);
 //      connect(moveAct, &QAction::triggered, this, &MainWindow::openFile);
 

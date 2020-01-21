@@ -5,9 +5,11 @@
 #include <archive_entry.h>
 #include <QString>
 #include <string>
+#include <QPair>
+#include <QList>
 
 bool isArchive(const QString& filename);
-
+int compressFiles(const QList<QPair<QString, QString>>& selectedFiles, const QString& outname, int compress);
 
 class Archive {
 private:
@@ -20,8 +22,6 @@ public:
     explicit Archive(const QString& filename);
 
     ~Archive();
-
-    void open(const QString& filename);
 
     void close();
 

@@ -46,7 +46,7 @@ bool MainWindow::overwriteExisted(const QString &path) {
                                       "File with this name already exists. Do you want to overwrite it?",
                                       QMessageBox::Yes | QMessageBox::No);
         if (reply == QMessageBox::Yes) {
-//            removeItem(QFileInfo(path));
+          //  removeItem(QFileInfo(path));
             return true;
         } else
             return false;

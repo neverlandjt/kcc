@@ -31,7 +31,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->rhsView->setRootIndex(model->index(sPath));
     ui->rhsView->verticalHeader()->setVisible(false); // hide index column
 
-
     ui->lhsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->lhsView->horizontalHeader()->setStretchLastSection(true);
 
@@ -45,26 +44,17 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lhsView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     ui->rhsView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
-
-
     ui->lhsline->setCurrentText(curr_lhs_path);
     ui->rhsline->setCurrentText(curr_rhs_path);
 
     connect(ui->lhsView, SIGNAL(clicked(QModelIndex)), this, SLOT(on_click(QModelIndex)));
     connect(ui->rhsView, SIGNAL(clicked(QModelIndex)), this, SLOT(on_click(QModelIndex)));
 
-
     connect(ui->lhsView, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(on_view_doubleClicked(QModelIndex)));
     connect(ui->rhsView, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(on_view_doubleClicked(QModelIndex)));
 
-
     connect(ui->lhsView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(customMenuRequested(QPoint)));
     connect(ui->rhsView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(customMenuRequested(QPoint)));
-
-
-    connect(ui->lhsline, SIGNAL(activated(int)), this, SLOT(linePressed()));
-    connect(ui->rhsline, SIGNAL(activated(int)), this, SLOT(linePressed()));
-
 
 
     ui->lhsView->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -72,7 +62,106 @@ MainWindow::MainWindow(QWidget *parent)
 
     createActions();
     addMenu();
+
+
+    ui->lhsView->setDragDropMode(QAbstractItemView::InternalMove);
+    ui->lhsView->setDragEnabled(true);
+    ui->lhsView->setAcceptDrops(true);
+    ui->lhsView->setDropIndicatorShown(true);
+
+    ui->rhsView->setDragDropMode(QAbstractItemView::InternalMove);
+    ui->rhsView->setDragEnabled(true);
+    ui->rhsView->setAcceptDrops(true);
+    ui->rhsView->setDropIndicatorShown(true);
+
+    ui->lhsView->viewport()->installEventFilter(this);
+    ui->rhsView->viewport()->installEventFilter(this);
+
+    ui->rhsView->setAlternatingRowColors(true);
+    ui->lhsView->setAlternatingRowColors(true);
+
+    ui->rhsView->horizontalHeader()->setSortIndicator(-1, Qt::AscendingOrder);
+    ui->lhsView->horizontalHeader()->setSortIndicator(-1, Qt::AscendingOrder);
+
+    ui->rhsView->setSortingEnabled(true);
+    ui->lhsView->setSortingEnabled(true);
+
+    connect(ui->lhsline, SIGNAL(activated(int)), this, SLOT(linePressed()));
+    connect(ui->rhsline, SIGNAL(activated(int)), this, SLOT(linePressed()));
+
+
+#ifdef _WIN32
+    setUpBoxes();
+#endif
 }
+
+
+void MainWindow::setUpBoxes(){
+    QStringList drives;
+
+    DWORD dr = GetLogicalDrives();
+    int n;
+    QString drive;
+
+    for( int i = 0; i < 26; i++ ){
+        n = ((dr>>i)&0x00000001);
+        if( n == 1 ){
+            drive = char(65+i);
+            drive += ":\\";
+            drives.append(drive);
+        }
+    }
+
+    ui->rhsBox->addItems(drives);
+    ui->lhsBox->addItems(drives);
+
+    QString currRhsDrive{curr_rhs_path[0]};
+    ui->rhsBox->setCurrentText(currRhsDrive);
+
+    QString currLhsDrive{curr_lhs_path[0]};
+    ui->lhsBox->setCurrentText(currLhsDrive);
+
+    connect(ui->rhsBox, SIGNAL(currentTextChanged(QString)), this, SLOT(changeDrive(QString)));
+    connect(ui->lhsBox, SIGNAL(currentTextChanged(QString)), this, SLOT(changeDrive(QString)));
+}
+
+
+void MainWindow::changeDrive(QString drive){
+    if (curr_context == context::rhs){
+        ui->rhsView->setRootIndex(model->index(drive));
+        curr_rhs_path = drive;
+        ui->rhsline->setCurrentText(curr_rhs_path);
+    }
+    else{
+        ui->lhsView->setRootIndex(model->index(drive));
+        curr_lhs_path = drive;
+        ui->lhsline->setCurrentText(curr_lhs_path);
+    }
+
+}
+
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *e){
+    if (e->mimeData()->hasUrls()) {
+        e->acceptProposedAction();
+    }
+}
+
+void MainWindow::dropEvent(QDropEvent *e)
+{
+    foreach (const QUrl &url, e->mimeData()->urls()) {
+        QString fileName = url.toLocalFile();
+    }
+    if (curr_context == context::rhs){
+            ui->rhsView->setAcceptDrops(true);
+
+    } else{
+        ui->lhsView->setAcceptDrops(true);
+
+    }
+
+}
+
 
 
 void MainWindow::exit() {
@@ -109,6 +198,7 @@ void MainWindow::addMenu() {
 
     toolsMenu = menuBar()->addMenu(tr("&Tools"));
     toolsMenu->addAction(findAct);
+
 
     if (view == ui->rhsView) curr_context = context::rhs;
     else if (view == ui->lhsView) curr_context = context::lhs;
@@ -172,6 +262,7 @@ void MainWindow::customMenuRequested(const QPoint &pos) {
         menu->addSeparator();
         menu->addAction(deleteAct);
         if (selectedIndexes.size() == 1) {
+//            menu->addAction(openAct);
             menu->addAction(editAct);
 
             menu->addSeparator();
@@ -185,6 +276,8 @@ void MainWindow::customMenuRequested(const QPoint &pos) {
                 menu->addSeparator();
             }
         }
+        menu->addAction(compressAct);
+
     }
     if (view == ui->rhsView) curr_context = context::rhs;
     else if (view == ui->lhsView) curr_context = context::lhs;
@@ -194,6 +287,60 @@ void MainWindow::customMenuRequested(const QPoint &pos) {
 
     menu->popup(view->viewport()->mapToGlobal(pos));
 
+}
+
+
+QList<QPair<QString, QString>> MainWindow::getSelectedFiles(){
+    QList<QPair<QString, QString>> selectedFiles;
+
+    QDir dir(curr_context ? curr_rhs_path:curr_lhs_path);
+    QString curr;
+    foreach (QModelIndex index, selectedIndexes){
+        curr = model->fileInfo(index).absoluteFilePath();
+
+        const QFileInfo outputDir(curr);
+
+        if (outputDir.isDir()){
+            QStringList filesInDir = listDirectoryRecursive((curr));
+            foreach(QString file, filesInDir){
+                selectedFiles.append(QPair<QString, QString>{file, dir.relativeFilePath(file)});
+            }
+        } else{
+            selectedFiles.append(QPair<QString, QString>{dir.absoluteFilePath(curr), dir.relativeFilePath(curr)});
+        }
+        }
+   return selectedFiles;
+
+}
+
+
+
+QStringList MainWindow::listDirectoryRecursive(const QString& dirPath){
+    QStringList filesInDir;
+    QDir parent(dirPath);
+    parent.setFilter(QDir::Files | QDir::NoDot | QDir::NoDotDot);
+
+    QDirIterator it(parent,  QDirIterator::Subdirectories);
+    while (it.hasNext())
+        filesInDir.append(it.next());
+
+    return filesInDir;
+
+}
+
+void MainWindow::compressFile(){
+    auto filesToCompress = getSelectedFiles();
+    bool ok;
+    QString curr = curr_context ? curr_rhs_path : curr_lhs_path;
+    QString text = QInputDialog::getText(this, tr("Create archive"),
+                                         tr("New archive name:"), QLineEdit::Normal,
+                                          curr + curr.mid(curr.lastIndexOf('/'), curr.length())  +  ".zip",
+                                         &ok);
+
+    if (ok && !text.isEmpty()) {
+        compressFiles(filesToCompress, text, 'o');
+
+    }
 }
 
 
