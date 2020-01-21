@@ -30,7 +30,7 @@ void Finder::on_goButton_pressed()
 
     ui->filesTable->setRowCount(0);
 
-      QString fileName = ui->filenameBox->currentText();
+      QString fileName = "*"+ ui->filenameBox->currentText()+"*";
       QString text = ui->containsBox->currentText();
       QString path = QDir::cleanPath(ui->searchInBox->currentText());
       currentDir = QDir(path);
