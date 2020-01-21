@@ -8,7 +8,9 @@
 #include<QDebug>
 #include <QApplication>
 #include<QTableView>
+#ifdef _WIN32
 #include <fileapi.h>
+#endif
 
 #include"finder.h"
 
