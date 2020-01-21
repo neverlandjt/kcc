@@ -65,9 +65,9 @@ private
     void extractArchive();
 
     void extractArchiveTo();
-
+#ifdef _WIN32
     void setUpBoxes();
-
+#endif
     void linePressed();
     void changeContext();
 

@@ -92,10 +92,13 @@ MainWindow::MainWindow(QWidget *parent)
 
 #ifdef _WIN32
     setUpBoxes();
+#else
+    ui->rhsBox->setVisible(false);
+    ui->lhsBox->setVisible(false);
 #endif
 }
 
-
+#ifdef _WIN32
 void MainWindow::setUpBoxes(){
     QStringList drives;
 
@@ -124,7 +127,7 @@ void MainWindow::setUpBoxes(){
     connect(ui->rhsBox, SIGNAL(currentTextChanged(QString)), this, SLOT(changeDrive(QString)));
     connect(ui->lhsBox, SIGNAL(currentTextChanged(QString)), this, SLOT(changeDrive(QString)));
 }
-
+#endif
 
 void MainWindow::changeDrive(QString drive){
     if (curr_context == context::rhs){

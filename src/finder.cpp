@@ -37,8 +37,8 @@ void Finder::on_goButton_pressed()
       QStringList filter;
       if (!fileName.isEmpty())
           filter << fileName;
-      qDebug()<<filter;
-      QDirIterator it(path, filter, QDir::AllEntries | QDir::NoSymLinks | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+
+    QDirIterator it(path, filter, QDir::AllEntries | QDir::NoSymLinks | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
       QStringList files;
       while (it.hasNext())
           files << it.next();
@@ -46,7 +46,7 @@ void Finder::on_goButton_pressed()
           files = findFiles(files, text);
       files.sort();
       showFiles(files);
-qDebug()<<files;
+
 }
 
 
